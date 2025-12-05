@@ -20,6 +20,11 @@ function Range:Contains(value)
     return value >= self._min and value <= self._max
 end
 
+---@return number size
+function Range:GetSize()
+    return self._max - self._min + 1
+end
+
 ---@class Ingredients
 local Ingredients = {
     ---@type Range[]
@@ -34,12 +39,53 @@ function Ingredients:new()
     return ingredients
 end
 
+function Ingredients:RemoveOverlappingRanges()
+    table.sort(self._freshRanges, function(a, b) return a._min < b._min end)
+    local mergedRanges = {}
+    local currentRange = self._freshRanges[1]
+
+    for i = 2, #self._freshRanges do
+        local nextRange = self._freshRanges[i]
+        if currentRange._max >= nextRange._min then
+            if nextRange._max > currentRange._max then
+                currentRange._max = nextRange._max
+            end
+        else
+            table.insert(mergedRanges, currentRange)
+            currentRange = nextRange
+        end
+    end
+    table.insert(mergedRanges, currentRange)
+    self._freshRanges = mergedRanges
+end
+
+---@param min number
+---@param max number
+function Ingredients:AddOrExpandRange(min, max)
+    if self:IsInRanges(min) or self:IsInRanges(max) then
+        for _, range in ipairs(self._freshRanges) do
+            if range:Contains(min) then
+                if max > range._max then
+                    range._max = max
+                end
+            elseif range:Contains(max) then
+                if min < range._min then
+                    range._min = min
+                end
+            end
+        end
+    else
+        table.insert(self._freshRanges, Range:new(min, max))
+    end
+    self:RemoveOverlappingRanges()
+end
+
 ---@param inputLines string
 function Ingredients:ParseInput(inputLines)
     for line in inputLines:gmatch("[^\n]+") do
         local rangeMin, rangeMax = line:match("(%d+)%-(%d+)")
         if rangeMin and rangeMax then
-            table.insert(self._freshRanges, Range:new(tonumber(rangeMin), tonumber(rangeMax)))
+            self:AddOrExpandRange(tonumber(rangeMin), tonumber(rangeMax))
         else
             local ingredient = line:match("%d+")
             if self:IsInRanges(tonumber(ingredient)) then
@@ -60,11 +106,22 @@ function Ingredients:IsInRanges(value)
     return false
 end
 
+---@return number freshCount
 function Ingredients:GetFreshCount()
     return self._freshCount
 end
 
+---@return number freshCount
+function Ingredients:GetTotalFreshCount()
+    local total = 0
+    for _, range in ipairs(self._freshRanges) do
+        total = total + range:GetSize()
+    end
+    return total
+end
+
 local input = require("Input")
-local p1 = Ingredients:new()
-p1:ParseInput(input)
-print(p1:GetFreshCount())
+local ingredients = Ingredients:new()
+ingredients:ParseInput(input)
+print(("Solution 1: %d"):format(ingredients:GetFreshCount()))
+print(("Solution 2: %d"):format(ingredients:GetTotalFreshCount()))
