@@ -31,6 +31,7 @@ local Grid = {
     _cells = {}
 }
 
+---@return Grid grid
 function Grid:New()
     local grid = setmetatable({}, {__index = Grid})
     return grid
@@ -51,6 +52,7 @@ function Grid:ParseInput(input)
     end
 end
 
+---@param grid Cell[][]
 function Grid:PrintGrid(grid)
     for y, xTbl in ipairs(grid or self._cells) do
         local line = ""
@@ -59,6 +61,8 @@ function Grid:PrintGrid(grid)
     end
 end
 
+---@param tbl table
+---@return table tblCopy
 function Grid:GetCopy(tbl)
     local newTbl = {}
     for k, v in pairs(tbl) do
@@ -92,7 +96,58 @@ function Grid:GetSolution1()
     return splitCount, grid
 end
 
+---@return number totalTimelines
+function Grid:GetSolution2()
+    local counts = {}
+    local maxY = #self._cells
+
+    local maxX = 0
+    if maxY > 0 then maxX = #self._cells[1] end
+
+    local function addCount(y, x, amount)
+        if not counts[y] then counts[y] = {} end
+        counts[y][x] = (counts[y][x] or 0) + amount
+    end
+
+    for y, row in ipairs(self._cells) do
+        for x, cell in pairs(row) do
+            if cell._type == "S" then
+                addCount(y, x, 1)
+            end
+        end
+    end
+
+    for y = 1, maxY do
+        if counts[y] then
+            for x, count in pairs(counts[y]) do
+                if x >= 1 and x <= maxX then
+                    local cellType = self._cells[y][x]._type
+
+                    if cellType == "^" then
+                        addCount(y + 1, x - 1, count)
+                        addCount(y + 1, x + 1, count)
+                    else
+                        addCount(y + 1, x, count)
+                    end
+                else
+                    addCount(y + 1, x, count)
+                end
+            end
+        end
+    end
+
+    local totalTimelines = 0
+    if counts[maxY + 1] then
+        for _, count in pairs(counts[maxY + 1]) do
+            totalTimelines = totalTimelines + count
+        end
+    end
+    return totalTimelines
+end
+
 local grid = Grid:New()
 grid:ParseInput(input)
-local splitCount, solutionGrid = grid:GetSolution1()
+local splitCount = grid:GetSolution1()
 print(("Solution 1: %d"):format(splitCount))
+local totalTimelines = grid:GetSolution2()
+print(("Solution 2: %d"):format(totalTimelines))
