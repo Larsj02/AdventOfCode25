@@ -51,9 +51,9 @@ function CircuitSolver:FindRepresentative(boxIndex)
     return representativeIndex
 end
 
----@param boxIndexA
----@param boxIndexB
----@return boolean
+---@param boxIndexA number
+---@param boxIndexB number
+---@return boolean wasMerged
 function CircuitSolver:ConnectCircuits(boxIndexA, boxIndexB)
     local representativeA = self:FindRepresentative(boxIndexA)
     local representativeB = self:FindRepresentative(boxIndexB)
@@ -66,68 +66,79 @@ function CircuitSolver:ConnectCircuits(boxIndexA, boxIndexB)
     return false
 end
 
----@return number
-function CircuitSolver:GetSolution1()
-    ---@type ConnectionCandidate[]
-    local allPossibleConnections = {}
+---@return ConnectionCandidate[]
+function CircuitSolver:GenerateSortedConnections()
+    local connections = {}
     local boxCount = #self.junctionBoxes
 
     for indexA = 1, boxCount do
         for indexB = indexA + 1, boxCount do
             local boxA = self.junctionBoxes[indexA]
             local boxB = self.junctionBoxes[indexB]
+            local deltaX, deltaY, deltaZ = boxA.x - boxB.x, boxA.y - boxB.y, boxA.z - boxB.z
 
-            local deltaX = boxA.x - boxB.x
-            local deltaY = boxA.y - boxB.y
-            local deltaZ = boxA.z - boxB.z
-
-            local distanceSquared = (deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ)
-
-            table.insert(allPossibleConnections, {
+            table.insert(connections, {
                 boxIndexA = indexA,
                 boxIndexB = indexB,
-                distanceSquared = distanceSquared
+                distanceSquared = (deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ)
             })
         end
     end
 
-    table.sort(allPossibleConnections, function(connectionA, connectionB)
-        return connectionA.distanceSquared < connectionB.distanceSquared
-    end)
+    table.sort(connections, function(a, b) return a.distanceSquared < b.distanceSquared end)
+    return connections
+end
 
-    local maxConnectionsToProcess = 1000
-    local actualLimit = math.min(maxConnectionsToProcess, #allPossibleConnections)
+function CircuitSolver:Reset()
+    for i = 1, #self.junctionBoxes do self.parentIndices[i] = i end
+end
 
-    for i = 1, actualLimit do
-        local connection = allPossibleConnections[i]
-        self:ConnectCircuits(connection.boxIndexA, connection.boxIndexB)
+---@return number result1
+function CircuitSolver:GetSolution1()
+    self:Reset()
+    local allPossibleConnections = self:GenerateSortedConnections()
+
+    for i = 1, math.min(1000, #allPossibleConnections) do
+        local conn = allPossibleConnections[i]
+        self:ConnectCircuits(conn.boxIndexA, conn.boxIndexB)
     end
 
-    ---@type table<number, number>
     local circuitSizeMap = {}
-
-    for boxIndex = 1, boxCount do
-        local representativeIndex = self:FindRepresentative(boxIndex)
-
-        local currentCount = circuitSizeMap[representativeIndex] or 0
-        circuitSizeMap[representativeIndex] = currentCount + 1
+    for boxIndex = 1, #self.junctionBoxes do
+        local root = self:FindRepresentative(boxIndex)
+        circuitSizeMap[root] = (circuitSizeMap[root] or 0) + 1
     end
 
-    ---@type number[]
     local sortedSizes = {}
-    for _, size in pairs(circuitSizeMap) do
-        table.insert(sortedSizes, size)
+    for _, size in pairs(circuitSizeMap) do table.insert(sortedSizes, size) end
+    table.sort(sortedSizes, function(a, b) return a > b end)
+
+    return (sortedSizes[1] or 0) * (sortedSizes[2] or 0) * (sortedSizes[3] or 0)
+end
+
+---@return number result2
+function CircuitSolver:GetSolution2()
+    self:Reset()
+    local allPossibleConnections = self:GenerateSortedConnections()
+
+    local distinctCircuits = #self.junctionBoxes
+
+    for _, conn in ipairs(allPossibleConnections) do
+        if self:ConnectCircuits(conn.boxIndexA, conn.boxIndexB) then
+            distinctCircuits = distinctCircuits - 1
+
+            if distinctCircuits == 1 then
+                local bA = self.junctionBoxes[conn.boxIndexA]
+                local bB = self.junctionBoxes[conn.boxIndexB]
+                return bA.x * bB.x
+            end
+        end
     end
-
-    table.sort(sortedSizes, function(sizeA, sizeB) return sizeA > sizeB end)
-
-    local largest = sortedSizes[1] or 0
-    local secondLargest = sortedSizes[2] or 0
-    local thirdLargest = sortedSizes[3] or 0
-
-    return largest * secondLargest * thirdLargest
+    return 0
 end
 
 local solver = CircuitSolver:New(input)
 local result1 = solver:GetSolution1()
 print(("Solution 1: %d"):format(result1))
+local result2 = solver:GetSolution2()
+print(("Solution 2: %d"):format(result2))
