@@ -2,7 +2,7 @@
 
 This repository contains my personal solutions for **Advent of Code 2025**, implemented in **Lua**.
 
-Each puzzle day is a standalone Lua script (for example `Day1.lua`, `Day2.lua`, …) that reads its input from `input.txt` and prints the answers for **Part 1** and **Part 2** to the terminal.
+You can run the solutions easily using the interactive **Solution Wizard**, or run individual day scripts manually.
 
 ---
 
@@ -24,40 +24,53 @@ https://www.lua.org/download.html
 
 ## Project Structure
 
-- `Day1.lua`, `Day2.lua`, `Day3.lua`, ... – solutions for each Advent of Code day
-- `Input.lua` – shared input helper used by the day scripts
-- `input.txt` – the puzzle input for the day you want to run
-
-Each `DayX.lua` script assumes that `input.txt` in the project root contains the appropriate Advent of Code input for that specific day.
+  - `main.lua` – The interactive Solution Wizard (recommended entry point)
+  - `Day1.lua`, `Day2.lua`, ... – Standalone solutions for each Advent of Code day
+  - `Input.lua` – Shared input helper used by the day scripts
+  - `input.txt` – The puzzle input file (managed automatically by the Wizard)
 
 ---
 
-## Usage
+## Usage (Recommended)
 
-1. **Clone or download** this repository.
-2. Make sure Lua is installed and available on your `PATH`.
-3. **Paste your Advent of Code input** for the day you want to run into `input.txt` (replacing any existing content).
-4. Run the Lua script for that day. For example, for **Day 1**:
+The easiest way to run the solutions is via the **Solution Wizard**:
 
-```bash
-lua ./Day1.lua
-```
+1.  **Clone or download** this repository.
+2.  Open your terminal in the project folder.
+3.  Start the wizard:
+    ```bash
+    lua main.lua
+    ```
+4.  **Follow the prompts**:
+      - Enter the **Day number** you want to run (e.g., `1`).
+      - **Paste your puzzle input** directly into the terminal.
+      - Type `END` on a new line to finish pasting.
 
-Or for **Day 2**:
+The wizard will automatically save your input to `input.txt`, run the specific day's solution, and then loop back so you can run another day without restarting.
 
-```bash
-lua ./Day2.lua
-```
+---
 
-The script will read from `input.txt` and print the solutions for **Part 1** and **Part 2** directly to the terminal.
+## Manual Usage
+
+If you prefer to run specific scripts directly or want to manage the input file yourself:
+
+1.  **Paste your Advent of Code input** for the specific day into `input.txt` (replacing any existing content).
+2.  Run the Lua script for that day. For example:
+    ```bash
+    lua Day1.lua
+    ```
+    Or for Day 2:
+    ```bash
+    lua Day2.lua
+    ```
+**Note:** If you switch days manually, you must overwrite `input.txt` with the new day's input before running the script.
 
 ---
 
 ## Notes
 
-- Each day expects `input.txt` to match that day's Advent of Code puzzle input.
-- If you switch to a different day, overwrite `input.txt` with the new day's input before running the corresponding `DayX.lua` file.
-- These solutions are written for clarity and learning; performance is generally more than sufficient for Advent of Code input sizes.
+  - The wizard (`main.lua`) handles `input.txt` automatically, so you don't need to manually edit files when using it.
+  - These solutions are written for clarity and learning; performance is generally more than sufficient for Advent of Code input sizes.
 
 ---
 
