@@ -181,8 +181,4 @@ end
 local tileList = TileList:New()
 tileList:ParseList(input)
 print(("Solution 1: %d"):format(tileList:GetBiggestSquare()))
-
-local start = os.time()
 print(("Solution 2: %d"):format(tileList:GetBiggestSquare(true)))
-local endT = os.time()
-print(("Time taken: %d seconds"):format(endT - start))
